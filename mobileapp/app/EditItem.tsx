@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 
 const EditItem = () => (
   <View style={styles.container}>
-    <Text style={styles.text}>This is the EditItem screen</Text>
+    <Text style={styles.text}>This is the Edit Item screen</Text>
   </View>
 );
 

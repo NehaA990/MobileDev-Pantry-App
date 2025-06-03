@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import axios from 'axios';
+import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 
 type Item = {
   _id: string;
@@ -11,57 +12,70 @@ type Item = {
 };
 
 export default function GetItem() {
-  // State to hold all pantry items fetched from backend
   const [items, setItems] = useState<Item[]>([]);
 
-  // Fetch items once component mounts
   useEffect(() => {
     axios.get('http://1.1.1.1:5000/getItems')
       .then(response => setItems(response.data))
       .catch(error => console.error('Error fetching items:', error));
   }, []);
 
-  // Renders each item in the list with styling and buttons
+  const handleEdit = (item: Item) => {
+    Alert.alert('Edit', `Edit item: ${item.name}`);
+    // navigation or modal logic here
+  };
+
+  const handleDelete = (item: Item) => {
+    Alert.alert(
+      'Delete Item',
+      `Are you sure you want to delete "${item.name}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => {/* delete logic here */} }
+      ]
+    );
+  };
+
   const renderItem = ({ item }: { item: Item }) => {
     const today = new Date();
     const expiration = new Date(item.expirationDate);
-    
-    // Calculate how many days left until expiration
     const daysDiff = Math.ceil((expiration.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-    // Check if expired or expiring soon (within 2 days)
     const isExpired = expiration < today;
     const isExpiringSoon = daysDiff <= 2 && daysDiff >= 0;
 
-    // Choose background style based on expiration status
     const boxStyle = [
       styles.itemBox,
-      isExpired ? styles.expiredBox : isExpiringSoon ? styles.soonBox : null,
+      isExpired ? styles.expiredBox : isExpiringSoon ? styles.soonBox : styles.freshBox,
     ];
-
-    // Change text color to red if expired
-    const textColorStyle = isExpired ? styles.expiredText : styles.itemText;
 
     return (
       <View style={boxStyle}>
-        {/* Item details section */}
+        <View style={styles.iconSection}>
+          <MaterialIcons
+            name={isExpired ? "error-outline" : isExpiringSoon ? "warning-amber" : "check-circle"}
+            size={32}
+            color={isExpired ? "#dc3545" : isExpiringSoon ? "#ffb300" : "#43cea2"}
+          />
+        </View>
         <View style={styles.itemDetails}>
-          <Text style={textColorStyle}>Name: {item.name}</Text>
-          <Text style={textColorStyle}>Category: {item.category}</Text>
-          <Text style={textColorStyle}>Quantity: {item.quantity}</Text>
-          <Text style={textColorStyle}>
+          <Text style={styles.itemName}>{item.name}</Text>
+          <Text style={styles.itemMeta}>Category: <Text style={styles.metaValue}>{item.category}</Text></Text>
+          <Text style={styles.itemMeta}>Quantity: <Text style={styles.metaValue}>{item.quantity}</Text></Text>
+          <Text style={[
+            styles.itemMeta,
+            isExpired && styles.expiredText,
+            isExpiringSoon && styles.soonText
+          ]}>
             Expiration: {expiration.toDateString()}
-            {isExpiringSoon ? ' (Expiring Soon)' : ''}
+            {isExpired ? ' (Expired)' : isExpiringSoon ? ' (Expiring Soon)' : ''}
           </Text>
         </View>
-
-        {/* Edit and Delete buttons */}
         <View style={styles.buttonRow}>
-          <TouchableOpacity style={styles.editButton} onPress={() => {/* Edit handler goes here */}}>
-            <Text style={styles.buttonText}>Edit</Text>
+          <TouchableOpacity style={styles.editButton} onPress={() => handleEdit(item)}>
+            <FontAwesome name="edit" size={18} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.deleteButton} onPress={() => {/* Delete handler goes here */}}>
-            <Text style={styles.buttonText}>Delete</Text>
+          <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item)}>
+            <FontAwesome name="trash" size={18} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -71,65 +85,116 @@ export default function GetItem() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Pantry Items</Text>
-      {/* FlatList for efficient scrolling of pantry items */}
       <FlatList
         data={items}
         renderItem={renderItem}
         keyExtractor={item => item._id}
+        contentContainerStyle={{ paddingBottom: 30 }}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No items found. Add something to your pantry!</Text>
+        }
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
+  container: {
+    flex: 1,
+    backgroundColor: '#f7fafc',
+    padding: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#185a9d',
+    marginBottom: 18,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
   itemBox: {
-    backgroundColor: '#f9f9f9',
-    padding: 15,
-    marginBottom: 10,
-    borderRadius: 8,
-    flexDirection: 'row',         // Arrange details and buttons side by side
-    justifyContent: 'space-between',
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 18,
+    marginBottom: 14,
+    shadowColor: '#185a9d',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  iconSection: {
+    marginRight: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   itemDetails: {
-    flex: 1,                      // Take up all space except buttons
-    paddingRight: 10,
+    flex: 1,
+    justifyContent: 'center',
   },
-  soonBox: {
-    backgroundColor: '#fff8cc',   // Light yellow background for soon-expiring items
+  itemName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2d3748',
+    marginBottom: 2,
   },
-  expiredBox: {
-    backgroundColor: '#ffe6e6',   // Light red background for expired items
+  itemMeta: {
+    fontSize: 15,
+    color: '#4a5568',
+    marginBottom: 1,
   },
-  itemText: {
-    fontSize: 16,
-    color: '#000',
-  },
-  expiredText: {
-    fontSize: 16,
-    color: 'red',
+  metaValue: {
+    color: '#185a9d',
+    fontWeight: '600',
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 10,                     // Space between buttons (gap supported in newer RN)
+    alignItems: 'center',
+    marginLeft: 10,
+    gap: 8,
   },
   editButton: {
-    backgroundColor: '#007bff',   // Bootstrap blue
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    marginRight: 8,
+    backgroundColor: '#43cea2',
+    padding: 8,
+    borderRadius: 8,
+    marginRight: 6,
+    elevation: 1,
   },
   deleteButton: {
-    backgroundColor: '#dc3545',   // Bootstrap red
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+    backgroundColor: '#dc3545',
+    padding: 8,
+    borderRadius: 8,
+    elevation: 1,
   },
-  buttonText: {
-    color: '#fff',
+  expiredBox: {
+    borderWidth: 1.5,
+    borderColor: '#dc3545',
+    backgroundColor: '#ffe6e6',
+  },
+  soonBox: {
+    borderWidth: 1.5,
+    borderColor: '#ffb300',
+    backgroundColor: '#fff8cc',
+  },
+  freshBox: {
+    borderWidth: 1.5,
+    borderColor: '#43cea2',
+    backgroundColor: '#e6fff7',
+  },
+  expiredText: {
+    color: '#dc3545',
     fontWeight: 'bold',
+  },
+  soonText: {
+    color: '#ffb300',
+    fontWeight: 'bold',
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#aaa',
+    fontSize: 16,
+    marginTop: 40,
   },
 });
