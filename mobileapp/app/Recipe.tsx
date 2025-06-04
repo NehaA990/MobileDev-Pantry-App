@@ -10,7 +10,7 @@ const Recipe = () => {
     const fetchRecipe = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('http://10.30.16.64:5000/get-recipe'); // Replace IP if needed
+        const response = await fetch('http://0.0.0.4:5000/get-recipe'); // Replace IP if needed
         if (!response.ok) {
           throw new Error('Failed to fetch recipe');
         }

@@ -16,7 +16,7 @@ app.use((req, res, next) => {
 });
 
 // MongoDB Atlas connection string
-const MONGO_URI = 'mongodb+srv://nmegha82:Megha123@pantrycluster.thf2jrp.mongodb.net/';
+const MONGO_URI = '';
 
 // Connect to MongoDB
 mongoose.connect(MONGO_URI, { dbName: 'pantryDB' })
@@ -99,7 +99,7 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const genAI = new GoogleGenerativeAI("AIzaSyAe2S9uqerLUhdJ9lvnMTm30awHhDi1dsE");
+const genAI = new GoogleGenerativeAI("");
 
 app.get('/get-recipe', async (req, res) => {
   try {
