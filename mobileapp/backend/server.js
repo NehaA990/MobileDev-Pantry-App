@@ -99,7 +99,7 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const genAI = new GoogleGenerativeAI("");
+const genAI = new GoogleGenerativeAI("google-api");
 
 app.get('/get-recipe', async (req, res) => {
   try {
