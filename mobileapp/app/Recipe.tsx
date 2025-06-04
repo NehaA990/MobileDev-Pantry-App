@@ -1,21 +1,29 @@
 // app/Recipe.tsx (for Expo project)
 import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, ScrollView, Alert } from 'react-native';
 
 const Recipe = () => {
   const [recipe, setRecipe] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Mock recipe for now instead of API call
     const fetchRecipe = async () => {
-      setIsLoading(true);
-      setTimeout(() => {
-        setRecipe(
-          "Spaghetti Carbonara: Cook pasta. In a bowl, mix eggs, parmesan, and pepper. Fry pancetta, combine all with pasta."
-        );
+      try {
+        setIsLoading(true);
+        const response = await fetch('http://10.30.16.64:5000/get-recipe'); // Replace IP if needed
+        if (!response.ok) {
+          throw new Error('Failed to fetch recipe');
+        }
+
+        const data = await response.json();
+        setRecipe(data.recipe);
+      } catch (error) {
+        console.error("Error fetching recipe:", error);
+        Alert.alert("Error", "Unable to fetch recipe. Please try again later.");
+        setRecipe("Could not fetch recipe. Try again later.");
+      } finally {
         setIsLoading(false);
-      }, 1000); // Mock delay
+      }
     };
 
     fetchRecipe();
