@@ -2,7 +2,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-
+require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -17,6 +17,7 @@ app.use((req, res, next) => {
 
 // MongoDB Atlas connection string
 const MONGO_URI = '';
+
 
 // Connect to MongoDB
 mongoose.connect(MONGO_URI, { dbName: 'pantryDB' })
@@ -81,6 +82,58 @@ app.get('/getItems', async (req, res) => {
   }
 });
 
+// Edit item route (Update by ID)
+// Edit item route (Update by ID)
+app.put('/edit-item/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, category = '', quantity, purchaseDate, expirationDate } = req.body;
+
+    if (!name || !quantity || !purchaseDate || !expirationDate) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const updatedItem = await Item.findByIdAndUpdate(
+      id,
+      {
+        name,
+        category,
+        quantity,
+        purchaseDate: new Date(purchaseDate),
+        expirationDate: new Date(expirationDate),
+      },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedItem) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+
+    res.json(updatedItem);
+  } catch (err) {
+    console.error('Error editing item:', err);
+    res.status(500).json({ message: 'Error editing item', error: err.message });
+  }
+});
+
+// Delete item route (Delete by ID)
+app.delete('/delete-item/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedItem = await Item.findByIdAndDelete(id);
+
+    if (!deletedItem) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+
+    res.json({ message: 'Item deleted successfully', item: deletedItem });
+  } catch (err) {
+    console.error('Error deleting item:', err);
+    res.status(500).json({ message: 'Error deleting item', error: err.message });
+  }
+});
+
+
 // ✅ Get expired items (expirationDate < today)
 app.get('/expired-items', async (req, res) => {
   try {
@@ -95,11 +148,11 @@ app.get('/expired-items', async (req, res) => {
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running at http://0.0.0.0:${PORT}`);
+  console.log(`Server running at http://10.50.107.106:${PORT}`);
 });
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const genAI = new GoogleGenerativeAI("google-api");
+const genAI = new GoogleGenerativeAI("AIzaSyD-8DWg0M3KPefxzK0C1MmFckZpl8xOA0c");
 
 app.get('/get-recipe', async (req, res) => {
   try {
@@ -125,3 +178,4 @@ Make sure the recipe is concise, beginner-friendly, and uses common pantry items
     res.status(500).json({ message: 'Failed to generate recipe', error: err.message });
   }
 });
+
