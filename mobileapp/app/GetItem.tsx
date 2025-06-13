@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import axios from 'axios';
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+
+const BASE_URL = 'http://10.50.107.106:5000'; // Change to your ngrok URL if needed
 
 type Item = {
   _id: string;
@@ -13,33 +16,54 @@ type Item = {
 
 export default function GetItem() {
   const [items, setItems] = useState<Item[]>([]);
+  const router = useRouter();
 
-  useEffect(() => {
-    axios.get('http://0.0.0.0:5000/getItems')
+  const fetchItems = () => {
+    axios
+      .get(`${BASE_URL}/getItems`)
       .then(response => setItems(response.data))
       .catch(error => console.error('Error fetching items:', error));
+  };
+
+  useEffect(() => {
+    fetchItems();
   }, []);
 
   const handleEdit = (item: Item) => {
-    Alert.alert('Edit', `Edit item: ${item.name}`);
-    // navigation or modal logic here
+    router.push({
+      pathname: '/EditItem',
+      params: {
+        itemData: JSON.stringify(item),
+      },
+    });
   };
 
   const handleDelete = (item: Item) => {
-    Alert.alert(
-      'Delete Item',
-      `Are you sure you want to delete "${item.name}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => {/* delete logic here */} }
-      ]
-    );
+    Alert.alert('Delete Item', `Are you sure you want to delete "${item.name}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await axios.delete(`${BASE_URL}/delete-item/${item._id}`);
+            Alert.alert('Deleted', `"${item.name}" has been deleted.`);
+            fetchItems(); // Refresh after delete
+          } catch (error) {
+            Alert.alert('Error', 'Failed to delete item. Please try again.');
+            console.error('Error deleting item:', error);
+          }
+        },
+      },
+    ]);
   };
 
   const renderItem = ({ item }: { item: Item }) => {
     const today = new Date();
     const expiration = new Date(item.expirationDate);
-    const daysDiff = Math.ceil((expiration.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const daysDiff = Math.ceil(
+      (expiration.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
     const isExpired = expiration < today;
     const isExpiringSoon = daysDiff <= 2 && daysDiff >= 0;
 
@@ -52,29 +76,44 @@ export default function GetItem() {
       <View style={boxStyle}>
         <View style={styles.iconSection}>
           <MaterialIcons
-            name={isExpired ? "error-outline" : isExpiringSoon ? "warning-amber" : "check-circle"}
+            name={isExpired ? 'error-outline' : isExpiringSoon ? 'warning-amber' : 'check-circle'}
             size={32}
-            color={isExpired ? "#dc3545" : isExpiringSoon ? "#ffb300" : "#43cea2"}
+            color={isExpired ? '#dc3545' : isExpiringSoon ? '#ffb300' : '#43cea2'}
           />
         </View>
         <View style={styles.itemDetails}>
           <Text style={styles.itemName}>{item.name}</Text>
-          <Text style={styles.itemMeta}>Category: <Text style={styles.metaValue}>{item.category}</Text></Text>
-          <Text style={styles.itemMeta}>Quantity: <Text style={styles.metaValue}>{item.quantity}</Text></Text>
-          <Text style={[
-            styles.itemMeta,
-            isExpired && styles.expiredText,
-            isExpiringSoon && styles.soonText
-          ]}>
+          <Text style={styles.itemMeta}>
+            Category: <Text style={styles.metaValue}>{item.category}</Text>
+          </Text>
+          <Text style={styles.itemMeta}>
+            Quantity: <Text style={styles.metaValue}>{item.quantity}</Text>
+          </Text>
+          <Text
+            style={[
+              styles.itemMeta,
+              isExpired && styles.expiredText,
+              isExpiringSoon && styles.soonText,
+            ]}
+          >
             Expiration: {expiration.toDateString()}
             {isExpired ? ' (Expired)' : isExpiringSoon ? ' (Expiring Soon)' : ''}
           </Text>
         </View>
+
         <View style={styles.buttonRow}>
-          <TouchableOpacity style={styles.editButton} onPress={() => handleEdit(item)}>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => handleEdit(item)}
+            activeOpacity={0.8}
+          >
             <FontAwesome name="edit" size={18} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item)}>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => handleDelete(item)}
+            activeOpacity={0.8}
+          >
             <FontAwesome name="trash" size={18} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -90,6 +129,7 @@ export default function GetItem() {
         renderItem={renderItem}
         keyExtractor={item => item._id}
         contentContainerStyle={{ paddingBottom: 30 }}
+        keyboardShouldPersistTaps="handled" // KEEP this → avoids common FlatList bug
         ListEmptyComponent={
           <Text style={styles.emptyText}>No items found. Add something to your pantry!</Text>
         }
@@ -124,6 +164,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 3,
+    flex: 1,
   },
   iconSection: {
     marginRight: 14,
@@ -152,8 +193,9 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 10,
-    gap: 8,
+    justifyContent: 'flex-end',
+    flexShrink: 0,
+    marginLeft: 8,
   },
   editButton: {
     backgroundColor: '#43cea2',
