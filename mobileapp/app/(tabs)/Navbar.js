@@ -11,9 +11,8 @@ export default function Navbar() {
   const [bellAnim] = useState(new Animated.Value(0));
   const [expiringItems, setExpiringItems] = useState([]);
 
-  // ✅ Fetch and filter expired items
   useEffect(() => {
-    fetch('http://10.30.16.64:5000/expired-items')
+    fetch('http://10.50.107.106:5000/expired-items')
       .then(res => res.json())
       .then(data => {
         const today = new Date();
@@ -23,7 +22,6 @@ export default function Navbar() {
       .catch(err => console.error('Error fetching expired items:', err));
   }, []);
 
-  // 🔔 Animate bell when there are expired items
   useEffect(() => {
     if (expiringItems.length > 0) {
       Animated.loop(
@@ -52,49 +50,49 @@ export default function Navbar() {
   const isActive = (route) => pathname === route;
 
   return (
-    <LinearGradient
-      colors={['#43cea2', '#185a9d']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={styles.gradient}
-    >
-      <View style={styles.safeArea}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.navbar}>
-          {/* Home */}
-          <TouchableOpacity style={[styles.navItem, isActive('/') && styles.activeNavItem]} onPress={() => router.push('/')}>
-            <Entypo name="home" size={28} color={isActive('/') ? 'black' : 'white'} />
-            <Text style={[styles.navText, isActive('/') && styles.activeNavText]}>Home</Text>
-          </TouchableOpacity>
+    <View style={styles.navbarWrapper} pointerEvents="box-none">
+      <LinearGradient
+        colors={['#43cea2', '#185a9d']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.gradient}
+      >
+        <View style={styles.safeArea}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.navbar}
+          >
+            <TouchableOpacity style={[styles.navItem, isActive('/') && styles.activeNavItem]} onPress={() => router.push('/')}>
+              <Entypo name="home" size={28} color={isActive('/') ? 'black' : 'white'} />
+              <Text style={[styles.navText, isActive('/') && styles.activeNavText]}>Home</Text>
+            </TouchableOpacity>
 
-          {/* View Items */}
-          <TouchableOpacity style={[styles.navItem, isActive('/GetItem') && styles.activeNavItem]} onPress={() => router.push('/GetItem')}>
-            <MaterialIcons name="inventory" size={28} color={isActive('/GetItem') ? 'black' : 'white'} />
-            <Text style={[styles.navText, isActive('/GetItem') && styles.activeNavText]}>View Items</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={[styles.navItem, isActive('/GetItem') && styles.activeNavItem]} onPress={() => router.push('/GetItem')}>
+              <MaterialIcons name="inventory" size={28} color={isActive('/GetItem') ? 'black' : 'white'} />
+              <Text style={[styles.navText, isActive('/GetItem') && styles.activeNavText]}>View Items</Text>
+            </TouchableOpacity>
 
-          {/* Add Item */}
-          <TouchableOpacity style={[styles.navItem, isActive('/AddItem') && styles.activeNavItem]} onPress={() => router.push('/AddItem')}>
-            <FontAwesome name="plus" size={28} color={isActive('/AddItem') ? 'black' : 'white'} />
-            <Text style={[styles.navText, isActive('/AddItem') && styles.activeNavText]}>Add Item</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={[styles.navItem, isActive('/AddItem') && styles.activeNavItem]} onPress={() => router.push('/AddItem')}>
+              <FontAwesome name="plus" size={28} color={isActive('/AddItem') ? 'black' : 'white'} />
+              <Text style={[styles.navText, isActive('/AddItem') && styles.activeNavText]}>Add Item</Text>
+            </TouchableOpacity>
 
-          {/* Edit Item */}
-          <TouchableOpacity style={[styles.navItem, isActive('/EditItem') && styles.activeNavItem]} onPress={() => router.push('/EditItem')}>
-            <FontAwesome name="edit" size={28} color={isActive('/EditItem') ? 'black' : 'white'} />
-            <Text style={[styles.navText, isActive('/EditItem') && styles.activeNavText]}>Edit Item</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={[styles.navItem, isActive('/EditItem') && styles.activeNavItem]} onPress={() => router.push('/EditItem')}>
+              <FontAwesome name="edit" size={28} color={isActive('/EditItem') ? 'black' : 'white'} />
+              <Text style={[styles.navText, isActive('/EditItem') && styles.activeNavText]}>Edit Item</Text>
+            </TouchableOpacity>
 
-          {/* Alerts */}
-          <TouchableOpacity style={styles.navItem} onPress={handleBellPress}>
-            <Animated.View style={{ transform: [{ rotate: bellAnim.interpolate({ inputRange: [-1, 1], outputRange: ['-15deg', '15deg'] }) }] }}>
-              <FontAwesome name="bell" size={28} color={expiringItems.length > 0 ? '#ff5252' : 'white'} />
-            </Animated.View>
-            <Text style={[styles.navText, expiringItems.length > 0 && { color: '#ff5252', fontWeight: 'bold' }]}>Alerts</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
+            <TouchableOpacity style={styles.navItem} onPress={handleBellPress}>
+              <Animated.View style={{ transform: [{ rotate: bellAnim.interpolate({ inputRange: [-1, 1], outputRange: ['-15deg', '15deg'] }) }] }}>
+                <FontAwesome name="bell" size={28} color={expiringItems.length > 0 ? '#ff5252' : 'white'} />
+              </Animated.View>
+              <Text style={[styles.navText, expiringItems.length > 0 && { color: '#ff5252', fontWeight: 'bold' }]}>Alerts</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </LinearGradient>
 
-      {/* Modal popup */}
       <Modal visible={showModal} transparent={true} animationType="fade" onRequestClose={() => setShowModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -112,11 +110,19 @@ export default function Navbar() {
           </View>
         </View>
       </Modal>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  navbarWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 999,
+    pointerEvents: 'box-none', // Let inner elements receive touches, outer is transparent
+  },
   gradient: {
     borderBottomLeftRadius: 18,
     borderBottomRightRadius: 18,
